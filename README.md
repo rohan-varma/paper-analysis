@@ -2,6 +2,8 @@
 
 Analysis and implementation (in tensorflow) of deep learning papers. 
 
+These analyses are the ones I've worked on specifically, a more comprehensive list can be found here: https://github.com/uclaacmai/paper-analysis
+
 I analyzed these papers by contextualizing the core machine learning and deep learning concepts that were used. 
 
 For example, I explain things like probabalistic interpretations of ML algorithms, maximum likelihood estimation, and ML concepts such as SGD. 
