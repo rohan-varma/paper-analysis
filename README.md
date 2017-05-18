@@ -12,6 +12,10 @@ I then explain how the tougher concepts in the papers can be seen as building up
 
 My goal in doing this is for me to better understand recent papers and get better with tensorflow, as well as to show that deep learning research can be understood through understanding the core concepts. 
 
+### Current Papers
+
+### Papers to do
+
 ### Credits/Sources
 
 @adeshpande3 for helping with the noise labels corruption implementation
