@@ -3,11 +3,11 @@
 
 ### Introduction
 
-The Word2Vec model has become a standard method for representing words as dense vectors. This is typically done as a preprocessing step, after which the learned vectors are fed into a discriminative model (typically an RNN) to generate predictions such as movie review sentiment, do machine translation, or even generate text, character by character (TODO link to char-rnn). 
+The Word2Vec model has become a standard method for representing words as dense vectors. This is typically done as a preprocessing step, after which the learned vectors are fed into a discriminative model (typically an RNN) to generate predictions such as movie review sentiment, do machine translation, or even generate text, [character by character](https://github.com/karpathy/char-rnn). 
 
 ### Previous Language Models
 
-Previously, the bag of words model was commonly used to represent words and sentences as numerical vectors, which could then be fed into a classifier (for example Naive Bayes) to produce output predictions. Given a vocabulary of $V$ words and a document of $N$ words, a $V$-dimensional vector woudl be created to represent the vector, where index $i$ denotes the number of times the $i$th word in the vocabulary occured in the document. 
+Previously, the bag of words model was commonly used to represent words and sentences as numerical vectors, which could then be fed into a classifier (for example Naive Bayes) to produce output predictions. Given a vocabulary of $V$ words and a document of $N$ words, a $V$-dimensional vector would be created to represent the vector, where index $i$ denotes the number of times the $i$th word in the vocabulary occured in the document. 
 
 This model represented words as atomic units, assuming that all words were independent of each other. It had success in several fields such as document classification, spam detection, and even sentiment analysis, but its assumptions (that words are completely independent of each other) were too strong for more powerful and accurate models. A model that aimed to reduce some of the strong assumptions of the traditional bag of words model was the n-gram model. 
 
@@ -51,11 +51,18 @@ This notion of "surrounding" words is best described by considering a center (or
 
 ![img](http://mccormickml.com/assets/word2vec/training_data.png)
 
+Figure 1: Training Samples [(Source)](http://mccormickml.com/2016/04/19/word2vec-tutorial-the-skip-gram-model/)
+
+
+
 In contrast, for the CBOW model, we'll input the context words within the window (such as "the", "brown", "fox") and aim to predict the target word "quick" (simply reversing the input -> prediction pipeline from the skip-gram model). 
 
 The following is a visualization of the skip-gram and CBOW models:
 
 ![img](https://raw.githubusercontent.com/rohan-varma/paper-analysis/master/word2vec-papers/models.png)
+
+Figure 2: CBOW vs Skip-gram models. [(Source)](https://arxiv.org/pdf/1301.3781.pdf)
+                    
 
 In this [paper](https://arxiv.org/pdf/1301.3781.pdf), the overall recommendation was to use the skip-gram model, since it had been shown to perform better on analogy-related tasks than the CBOW model. Overall, if you understand one model, it is pretty easy to understand the other: just reverse the inputs and predictions. Since both papers focused on the skip-gram model, this post will do the same. 
 
@@ -83,6 +90,8 @@ This is done by representing the softmax layer as a binary tree where the words 
 
 <img src="https://raw.githubusercontent.com/rohan-varma/paper-analysis/master/word2vec-papers/hierarchical.png" height=80% width=80%>
 
+Figure 3: Hierarchical Softmax Tree. [(Source)](https://www.youtube.com/watch?v=B95LTf2rVWM)
+
 At each node in the tree starting from the root, we would like to predict the probability of branching right given the observed context. Therefore, in the above tree, if we would like to compute p(cat | context), we would define it as:
 
 p(cat | context) = p(left at node 1 | context) p(right at node 2 | context) p(right at node 5 | context) 
@@ -90,6 +99,8 @@ p(cat | context) = p(left at node 1 | context) p(right at node 2 | context) p(ri
 The actual computation to determine the probability of a word is done by taking the output of the previous layer, applying a set of node-specific weights and biases to it, and running that result through a non-linearity (often sigmoidal). The following image is an illustration of the process of computing the probability of the word "cat" given an observed context: 
 
 <img src="https://raw.githubusercontent.com/rohan-varma/paper-analysis/master/word2vec-papers/hierarchical2.png" height=80% width=80%>
+
+Figure 4: Hierarchical Softmax Computation. [(Source)](https://www.youtube.com/watch?v=B95LTf2rVWM)
 
 Here, $V$ is our matrix of weights connecting the outputs of our previous layer (denoted by $h(x)$) to our hierarchical layer, and the probabiltiy of branching right at a certain node is given by $\sigma(h(x)W_n + b_n)$. The probability of observing a particular word, then is just the product of the branches that lead to it. 
 
@@ -106,10 +117,12 @@ The main differences between NCE and Negative sampling is the choice of distribu
 
 ### Practical Considerations
 
-- Implementation of softmax
-- Subsampling of frequent words
-- Pruning when trying to predict
-- Avoiding underflow by taking logs
+** Implementing Softmax **: If you're implementing your own softmax function, it's important to consider overflow issues. Specifically, the computation $\sum_i e^{z_i}$ can easily overflow, leadning to `NaN` values while training. To resolve this issue, we can instead compute the equivalent $ \frac{e^{z_i + k}}{\sum_i e^{z_i + k}}$ and set $k = - max z$ so that the largets exponent is zero, avoiding overflow issues. 
+
+** Subsampling of frequent words **: We don't get much information from very frequent words such as "the", "it", and the like. There will be many more pairs of (the, French) as opposed to (France, French) but we're more interested in the latter pair. Therefore, it would be useful to subsample some of the more frequent words. We would also like to do this proportionally: very common words are sampled out with high probability, and uncommon words are not sampled out.
+
+In order to do this, the paper defines the probability of discarding a particular word as $p(w_i) = 1 - \frac{t}{freq(w_i)}$ where $t$ is an arbitrary constant, taken in the paper to be $10^-5$. This discarding function will cause words that appear with a frequency greater than $t$ to be sampled out with a high probability, while words that appear with a freqeuncy of less than or equal to $t$ will not be sampled out. For example, if $t = 10^-5$ and a particular word covers $0.1%$ of the corpus, then each instance of that word will be discarded from the training corpus with probability $0.9$. 
+
 
 ### Conclusion
 
@@ -120,9 +133,13 @@ We have discussed language models including the bag of words model, the n-gram m
 
 ### Sources
 
-[Link](https://papers.nips.cc/paper/5021-distributed-representations-of-words-and-phrases-and-their-compositionality.pdf) to paper. 
-
-Some insights from [this paper](https://arxiv.org/pdf/1301.3781.pdf) were also used.
+- [Distributed Representations of Words and Phrases](https://papers.nips.cc/paper/5021-distributed-representations-of-words-and-phrases-and-their-compositionality.pdf) - the main paper discussed. 
+- [Hierarchical Output Layer Video by Hugo Larochelle](https://www.youtube.com/watch?v=B95LTf2rVWM) - an excellent video going into great detail about hierarchical softmax. 
+- [Word2Vec explained](https://arxiv.org/pdf/1402.3722v1.pdf) - a meta-paper explaining the word2vec paper
+- [Chris McCormick's Word2Vec Tutorial](http://mccormickml.com/2016/04/19/word2vec-tutorial-the-skip-gram-model/)
+- [Stephan Gouws's Quora answer on Hierarchical Softmax](https://www.quora.com/Word2vec-How-can-hierarchical-soft-max-training-method-of-CBOW-guarantee-its-self-consistence) - an insightful answer about the hierarchical output layer
+- [Word Embeddings Post by Sebastian Ruder](http://sebastianruder.com/word-embeddings-1/) - an informative post covering word embeddings and language modelling. 
+- [Efficient estimation of word representations](https://arxiv.org/pdf/1301.3781.pdf) another key word2vec paper discussing the differences (both from an architecture perspective and empirical results) of the bag of words, skip-gram, and word2vec models. 
 
 
 
