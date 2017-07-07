@@ -13,7 +13,7 @@ This model represented words as atomic units, assuming that all words were indep
 
 ### N-gram models and Markov Chains
 
-Language models seek to predict the probability of the $t + 1$th word $w_{t + 1}$ given the previous $t$ words: 
+Language models seek to predict the probability of observing the $t + 1$th word $w_{t + 1}$ given the previous $t$ words: 
 
 $$p(w_{t + 1} | w_1, w_2, ... w_t)$$
 
@@ -33,7 +33,7 @@ Therefore, the probabilty of a sentence can be given by
 
 $$p(w_1, w_2, ... w_t) = p(w_1)\prod_{i = 2}^{t} p(w_i | w_{i - 1})$$
 
-The Markov assumption can be extended to condition the probability of the $t$th word on the previous two, three, four, and so on words. This is where the name of the n-gram model comes in - n is the number of previous timesteps we condition the current timestep on. Some examples:
+The Markov assumption can be extended to condition the probability of the $t$th word on the previous two, three, four, and so on words. This is where the name of the n-gram model comes in - $n$ is the number of previous timesteps we condition the current timestep on. Some examples:
 
 Unigram Model: $p(x_{t + 1} | x_1, x_2, ... x_t) = p(x_{t + 1})$
 
@@ -88,7 +88,7 @@ As discussed, the traditional softmax approach can become prohibitively expensiv
 
 This is done by representing the softmax layer as a binary tree where the words are leaf nodes of the tree, and the probabilities are computed by a walk from the root of the binary tree to the particular leaf. An example of the binary tree of the hierarchical layer is given below: 
 
-<img src="https://raw.githubusercontent.com/rohan-varma/paper-analysis/master/word2vec-papers/hierarchical.png" height=80% width=80%>
+![img](https://raw.githubusercontent.com/rohan-varma/paper-analysis/master/word2vec-papers/hierarchical.png)
 
 Figure 3: Hierarchical Softmax Tree. [(Source)](https://www.youtube.com/watch?v=B95LTf2rVWM)
 
@@ -98,13 +98,13 @@ p(cat | context) = p(left at node 1 | context) p(right at node 2 | context) p(ri
 
 The actual computation to determine the probability of a word is done by taking the output of the previous layer, applying a set of node-specific weights and biases to it, and running that result through a non-linearity (often sigmoidal). The following image is an illustration of the process of computing the probability of the word "cat" given an observed context: 
 
-<img src="https://raw.githubusercontent.com/rohan-varma/paper-analysis/master/word2vec-papers/hierarchical2.png" height=80% width=80%>
+![img](https://raw.githubusercontent.com/rohan-varma/paper-analysis/master/word2vec-papers/hierarchical2.png)
 
 Figure 4: Hierarchical Softmax Computation. [(Source)](https://www.youtube.com/watch?v=B95LTf2rVWM)
 
 Here, $V$ is our matrix of weights connecting the outputs of our previous layer (denoted by $h(x)$) to our hierarchical layer, and the probabiltiy of branching right at a certain node is given by $\sigma(h(x)W_n + b_n)$. The probability of observing a particular word, then is just the product of the branches that lead to it. 
 
-In the above image, we also notice that in a vocabulary of 8 words, we only needed 3 computations to approximate the softmax computation as opposed to 8. More generally, hierarchical softmax greatly reduces our computation time to $log_2(n)$ where $n$ is our vocabulary size, compared to linear time for softmax. [This paper] discussing the hierarchical layer reports up to 258x speedups in training. However, this speedup is only useful for training when we don't need to know the full probability distribution. In settings where we wish to emit the most likely word given a context (for example, in sentence generation), we'd still need to compute the probability of all of the words given the context, resulting in no speed up (although some methods such as pruning when the probability of a certain word quickly tends to zero can certainly increase efficiency). 
+In the above image, we also notice that in a vocabulary of 8 words, we only needed 3 computations to approximate the softmax computation as opposed to 8. More generally, hierarchical softmax greatly reduces our computation time to $log_2(n)$ where $n$ is our vocabulary size, compared to linear time for softmax. . However, this speedup is only useful for training when we don't need to know the full probability distribution. In settings where we wish to emit the most likely word given a context (for example, in sentence generation), we'd still need to compute the probability of all of the words given the context, resulting in no speed up (although some methods such as pruning when the probability of a certain word quickly tends to zero can certainly increase efficiency). 
 
 
 ### Negative Sampling and Noise Contrastive Estimation
@@ -117,7 +117,7 @@ The main differences between NCE and Negative sampling is the choice of distribu
 
 ### Practical Considerations
 
-** Implementing Softmax **: If you're implementing your own softmax function, it's important to consider overflow issues. Specifically, the computation $\sum_i e^{z_i}$ can easily overflow, leadning to `NaN` values while training. To resolve this issue, we can instead compute the equivalent $ \frac{e^{z_i + k}}{\sum_i e^{z_i + k}}$ and set $k = - max z$ so that the largets exponent is zero, avoiding overflow issues. 
+** Implementing Softmax **: If you're implementing your own softmax function, it's important to consider overflow issues. Specifically, the computation $\sum_i e^{z_i}$ can easily overflow, leadning to `NaN` values while training. To resolve this issue, we can instead compute the equivalent $ \frac{e^{z_i + k}}{\sum_i e^{z_i + k}}$ and set $k = - max z$ so that the largest exponent is zero, avoiding overflow issues. 
 
 ** Subsampling of frequent words **: We don't get much information from very frequent words such as "the", "it", and the like. There will be many more pairs of (the, French) as opposed to (France, French) but we're more interested in the latter pair. Therefore, it would be useful to subsample some of the more frequent words. We would also like to do this proportionally: very common words are sampled out with high probability, and uncommon words are not sampled out.
 
@@ -146,5 +146,3 @@ We have discussed language models including the bag of words model, the n-gram m
 ```python
 
 ```
-
-
