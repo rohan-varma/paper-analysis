@@ -5,14 +5,11 @@
 **Abstract**
 
 - Traditional DNNs have achieved good performance whenever large labelled training datasets are available, but cannot map sequences to sequences
-
 - Main approach of the paper is to use a multilayer LSTM to map input sequence to a fixed-length vector, and then another deep LSTM to decode the fixed length vector into a sequence
-
 - The LSTM model also learned useful phrase & sentence representations that are sensitive to word order and invariant to passive/active voice
-
 - - indicates that the actual structure of the language was mostly captured, the representation of “He ate the cookie” and “the cookie was eaten by him” aren’t too different
-
 - Reversing word order in source sentence helped because it introduced more short-term dependencies
+- $$p(a \vert b)​$$
 
 **Introduction**
 
